@@ -330,13 +330,13 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
           $dllbit64 = Is64Bit
           MyCopyItem -src $(if ($dllbit64) { $dir64 } else { $dir86 }) -subpath "dist\lib\rime.dll" -dest $weaselRoot
           MyCopyItem -src $(if ($dllbit64) { $dir64 } else { $dir86 }) -subpath "dist\lib\rime.pdb" -dest $weaselRoot
-          Start-Process $servercmd
+          Start-Process $servercmd -WorkingDirectory $weaselRoot
           if ($(Get-Process $processName -ErrorAction SilentlyContinue)) {
             Write-Host "☑  $processName has been started"
           }
         } catch [System.UnauthorizedAccessException] {
           Write-Host "❗ $_ please run as Administrator!"
-          Start-Process $servercmd
+          Start-Process $servercmd -WorkingDirectory $weaselRoot
           Write-Host "☑  $processName started"
           SafeExit
         } catch {
