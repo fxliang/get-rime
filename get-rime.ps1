@@ -296,7 +296,7 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
         if ((Test-Path ".\include") `
         -and (Test-Path ".\lib") -and (Test-Path ".\lib64") `
         -and (Test-Path ".\output\Win32")) {
-          Remove-Item include\rime*.h -ErrorAction SilentlyContinue
+          Remove-Item include\rime_*.h -ErrorAction SilentlyContinue
           MyCopyItem -src $dir86 -subpath "dist\include\rime_*.h" -dest "include\"
           MyCopyItem -src $dir86 -subpath "dist\lib\rime.lib"     -dest "lib\"
           MyCopyItem -src $dir86 -subpath "dist\lib\rime.dll"     -dest "output\Win32\"
