@@ -73,7 +73,7 @@ if ($os -eq "Windows") {
     $pattern = ""
     if ($use -eq "weasel") {
       $pattern = "rime-[0-9a-fA-F]+-" + $os + "-" + $build_variant + "-x(64|86)\.7z"
-    } elseif ($use -eq "dev") {
+    } else {
       $pattern = "rime-(deps-)?[0-9a-fA-F]+-" + $os + "-" + $build_variant + "-x(64|86)\.7z"
     }
   } elseif ($build_variant -eq "mingw") {
