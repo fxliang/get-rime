@@ -182,6 +182,13 @@ function Is64Bit {
     }
   }
 }
+if ($os -eq "Windows" -and $use -eq "weasel") {
+  if (Is64Bit) {
+    $pattern = "rime-[0-9a-fA-F]+-" + $os + "-" + $build_variant + "-x64\.7z"
+  } else {
+    $pattern = "rime-[0-9a-fA-F]+-" + $os + "-" + $build_variant + "-x86\.7z"
+  }
+}
 # check if file already downloaded
 $ignore_urls = @()
 $files_current_dir = Get-ChildItem -Path . -Name
@@ -344,8 +351,11 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
           $dllbit64 = Is64Bit
           MyCopyItem -src $(if ($dllbit64) { $dir64 } else { $dir86 }) -subpath "dist\lib\rime.dll" -dest $weaselRoot
           MyCopyItem -src $(if ($dllbit64) { $dir64 } else { $dir86 }) -subpath "dist\lib\rime.pdb" -dest $weaselRoot
-          Remove-Item -Path $dir64 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
-          Remove-Item -Path $dir86 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+          if ($dllbit64) {
+            Remove-Item -Path $dir64 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+          } else {
+            Remove-Item -Path $dir86 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+          }
           Start-Process $servercmd -WorkingDirectory $weaselRoot
           if ($(Get-Process $processName -ErrorAction SilentlyContinue)) {
             Write-Host "☑  $processName has been started"
