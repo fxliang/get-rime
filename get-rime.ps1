@@ -87,7 +87,7 @@ if ($os -eq "Windows") {
   $pattern = "rime-(deps-)?[0-9a-fA-F]+-" + $os + "-" + $build_variant + "\.tar.bz2"
   $home_dir = $HOME
 }
-if ($PSBoundParameters.ContainsKey("use") -and ($use -eq "weasel" -or $use -eq "dev")) {
+if ($PSBoundParameters.ContainsKey("use") -and ($use -eq "weasel" -or $use -eq "dev" -or $use -eq "toy")) {
   $extract = $true
 }
 # -Parallel require Powershell 7.0 or greater, default try to use it
@@ -144,8 +144,20 @@ try {
 } catch {
   $cmdOk = $false
   if($extract) {
-    Write-Host "❌ Error: 7z is not available. Maybe 7z is not in PATH or not installed"
-    SafeExit
+    Write-Host "❌ Error: 7z is not available. Maybe 7z is not in PATH or not installed";
+    $original_7z_url = "https://github.com/ip7z/7zip/releases/download/24.08/7zr.exe";
+    if ($url_pat -and $url_replace) {
+      $original_7z_url = $original_7z_url -replace $url_pat, $url_replace;
+    }
+    try {
+      Write-Host "We will download 7z console tool from: $original_7z_url";
+      Invoke-WebRequest -Uri $original_7z_url -OutFile ".\7z.exe";
+      $env:Path += ";$PWD";
+      $cmdOk = $true
+    } catch{
+      Write-Host "Error download 7z commandline tool";
+      SafeExit
+    }
   }
 }
 # check 64 bit
@@ -318,6 +330,20 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
           }
         }
       }
+      function KillToy {
+        $processName = "rime.toy"
+        $process = Get-Process $processName -ErrorAction SilentlyContinue
+        while ($process) {
+          if ($process) {
+            Stop-Process -Name $processName -Force -ErrorAction SilentlyContinue
+          }
+          Start-Sleep -Seconds 0.5
+          $process = Get-Process $processName -ErrorAction SilentlyContinue
+          if (-not $process) {
+            Write-Host "☑  $processName has been killed"
+          }
+        }
+      }
       if ( $use -eq "dev"){
         if ((Test-Path ".\include") `
         -and (Test-Path ".\lib") -and (Test-Path ".\lib64") `
@@ -332,6 +358,24 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
           MyCopyItem -src $dir64 -subpath "dist\lib\rime.dll"     -dest "output\"
           MyCopyItem -src $dir64 -subpath "dist\lib\rime.pdb"     -dest "output\"
           MyCopyItem -src $dir64 -subpath "share\opencc\*.*"      -dest "output\data\opencc\"
+          Remove-Item -Path $dir64 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+          Remove-Item -Path $dir86 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        } else {
+          Write-Host "❌ current directory is not a weasel source directory"
+        }
+      } elseif ($use -eq "toy") {
+        if ((Test-Path ".\include") `
+        -and (Test-Path ".\lib") -and (Test-Path ".\lib64")) {
+          KillToy
+          Remove-Item include\rime_*.h -ErrorAction SilentlyContinue
+          MyCopyItem -src $dir86 -subpath "dist\include\rime_*.h" -dest "include\"
+          MyCopyItem -src $dir86 -subpath "dist\lib\rime.lib"     -dest "lib\"
+          MyCopyItem -src $dir86 -subpath "dist\lib\rime.dll"     -dest "lib\"
+          MyCopyItem -src $dir86 -subpath "dist\lib\rime.pdb"     -dest "lib\"
+          MyCopyItem -src $dir64 -subpath "dist\lib\rime.lib"     -dest "lib64\"
+          MyCopyItem -src $dir64 -subpath "dist\lib\rime.dll"     -dest "lib64\"
+          MyCopyItem -src $dir64 -subpath "dist\lib\rime.pdb"     -dest "lib64\"
+          MyCopyItem -src $dir64 -subpath "share\opencc\*.*"      -dest "shared\opencc\"
           Remove-Item -Path $dir64 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
           Remove-Item -Path $dir86 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
         } else {
