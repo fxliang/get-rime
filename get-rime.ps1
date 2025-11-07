@@ -364,6 +364,16 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
           Write-Host "❌ current directory is not a weasel source directory"
         }
       } elseif ($use -eq "toy") {
+        # make dir if not exist
+        if (-not (Test-Path -Path ".\include")) {
+          New-Item -ItemType Directory -Path ".\include" > $null
+        }
+        if (-not (Test-Path -Path ".\lib")) {
+          New-Item -ItemType Directory -Path ".\lib" > $null
+        }
+        if (-not (Test-Path -Path ".\lib64")) {
+          New-Item -ItemType Directory -Path ".\lib64" > $null
+        }
         if ((Test-Path ".\include") `
         -and (Test-Path ".\lib") -and (Test-Path ".\lib64")) {
           KillToy
@@ -379,7 +389,7 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
           Remove-Item -Path $dir64 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
           Remove-Item -Path $dir86 -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
         } else {
-          Write-Host "❌ current directory is not a weasel source directory"
+          Write-Host "❌ current directory is not a toy source directory"
         }
       } elseif ($use -eq "weasel") {
         if ([Environment]::Is64BitOperatingSystem) {
@@ -411,6 +421,27 @@ if ($null -ne $response.assets -and $response.assets.Count -gt 0) {
           SafeExit
         } catch {
           Write-Host "❌ Error: $_"
+        }
+      }
+    }
+    elseif ($os -eq "macOS") {
+      if ( $use -eq "toy"){
+        if (-not (Test-Path -Path ".\include")) {
+          New-Item -ItemType Directory -Path ".\include" > $null
+        }
+        if (-not (Test-Path -Path ".\lib")) {
+          New-Item -ItemType Directory -Path ".\lib" > $null
+        }
+        if ((Test-Path "./include") -and (Test-Path "./lib")) {
+          Remove-Item include/rime_*.h -ErrorAction SilentlyContinue
+          # copy $outPath /dist/include/rime*.h to include
+          Copy-Item -Path "$outPath/dist/include/rime_*.h" -Destination "./include/" -ErrorAction SilentlyContinue
+          Write-Host "☑  rime_*.h has been copied to ./include/"
+          # copy $outPath /dist/lib/* to lib
+          Copy-Item -Path "$outPath/dist/lib/*" -Destination "./lib/" -ErrorAction SilentlyContinue
+          Write-Host "☑  lib files have been copied to ./lib/"
+        } else {
+          Write-Host "❌ current directory is not a toy source directory"
         }
       }
     }
